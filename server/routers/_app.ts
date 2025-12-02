@@ -4,6 +4,10 @@ import { db } from "../../db/drizzle";
 import { cars, tasks, taskSuggestions, TaskStatus } from "../../db/schema";
 import { eq } from "drizzle-orm";
 import { generateTaskSuggestions } from "../services/ai";
+import { fetchCarInfoFromVegvesen } from "../services/carFromVegvesen";
+
+const VEGVESEN_BASE_URL =
+  "https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/kjennemerkeoppslag/kjoretoy/";
 
 export const appRouter = router({
   getCars: publicProcedure.query(async () => {
@@ -31,17 +35,38 @@ export const appRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      const [newCar] = await db
-        .insert(cars)
-        .values({
-          regNr: input.regNr.toUpperCase(),
-          make: "TODO",
-          model: "TODO",
-          year: 0,
-          color: "TODO",
-        })
-        .returning();
-      return newCar;
+      const regNr = input.regNr.trim().toUpperCase();
+
+      try {
+        // Fetch before making new car object
+        const info = await fetchCarInfoFromVegvesen(regNr);
+        if (info) {
+          const [newCar] = await db
+            .insert(cars)
+            .values({
+              regNr: regNr,
+              make: info.make,
+              model: info.model,
+              year: info.year,
+              color: info.color,
+            })
+            .onConflictDoUpdate({
+              // TODO: could add feedback so text changes from "added" to "updated if this code runs"
+              target: cars.regNr,
+              set: {
+                make: info.make,
+                model: info.model,
+                year: info.year ?? 0,
+                color: info.color,
+              },
+            })
+            .returning();
+          return newCar;
+        }
+      } catch (err) {
+        // console.error("createCar DB error:", err);
+        throw new Error("Bil kan ikke hentes fra vegvesen");
+      }
     }),
 
   // Task Suggestions
@@ -71,17 +96,24 @@ export const appRouter = router({
       // Generate AI suggestions
       const suggestions = await generateTaskSuggestions(car);
 
+      // If the AI gave suggestions we want to remove previous ones to prevent getting to much info on the page
+      if (suggestions){
+        await db
+      .delete(taskSuggestions)
+      .where(eq(taskSuggestions.carId, input.carId));
+      }
+
       // Save suggestions to database
-      const insertedSuggestions = await db
-        .insert(taskSuggestions)
-        .values(
-          suggestions.map((suggestion) => ({
-            carId: input.carId,
-            title: suggestion.title,
-            description: suggestion.description,
-          }))
-        )
-        .returning();
+    const insertedSuggestions = await db
+      .insert(taskSuggestions)
+      .values(
+        suggestions.map((suggestion) => ({
+          carId: input.carId,
+          title: suggestion.title,
+          description: suggestion.description,
+        }))
+      )
+      .returning();
 
       return insertedSuggestions;
     }),
@@ -90,10 +122,7 @@ export const appRouter = router({
   getTasks: publicProcedure
     .input(z.object({ carId: z.number().int().positive() }))
     .query(async ({ input }) => {
-      return await db
-        .select()
-        .from(tasks)
-        .where(eq(tasks.carId, input.carId));
+      return await db.select().from(tasks).where(eq(tasks.carId, input.carId));
     }),
 
   createTask: publicProcedure
