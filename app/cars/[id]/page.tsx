@@ -5,11 +5,15 @@ import { trpc } from "@/utils/trpc";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TaskStatus } from "@/db/schema";
+import { validationTaskHelper } from "@/utils/validationTaskHelper";
+
+
 
 export default function CarPage() {
   const { id } = useParams() as { id: string };
   const carId = parseInt(id);
   const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
+  const [feedbackTaskForm, setFeedbackTaskForm] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
 
@@ -26,6 +30,8 @@ export default function CarPage() {
     { carId },
     { enabled: !!carId }
   );
+
+  console.log(tasks);
 
   const fetchAISuggestions = trpc.fetchAISuggestions.useMutation({
     onSuccess: () => {
@@ -62,14 +68,20 @@ export default function CarPage() {
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
-    if (taskTitle.trim()) {
-      createTask.mutate({
-        carId,
-        title: taskTitle.trim(),
-        description: taskDescription.trim() || undefined,
-      });
+
+     const {allowCreate, feedback} = validationTaskHelper(tasks, taskTitle.trim());
+     console.log(feedback)
+
+      if (allowCreate) {
+        createTask.mutate({
+          carId,
+          title: taskTitle.trim(),
+          description: taskDescription.trim() || undefined,
+        });
+      } else {
+        setFeedbackTaskForm(feedback);
+      }
     }
-  };
 
   const handleStatusChange = (taskId: number, newStatus: TaskStatus) => {
     updateTaskStatus.mutate({
@@ -184,8 +196,8 @@ export default function CarPage() {
 
         {!suggestions || suggestions.length === 0 ? (
           <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600">
-            Ingen forslag ennå. Klikk på &quot;Hent AI-forslag&quot; for å generere
-            forslag.
+            Ingen forslag ennå. Klikk på &quot;Hent AI-forslag&quot; for å
+            generere forslag.
           </div>
         ) : (
           <div className="grid gap-3">
