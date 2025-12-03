@@ -18,3 +18,12 @@ Files changed:
 - [_app.ts](/server/routers/_app.ts): Changed fetchAISuggestions to delete the previous suggestions in the database before adding the ai suggested.
 
 Followed thus for implementation: https://vercel.com/docs/ai-gateway/openai-compat
+
+## Task 3
+
+### Input validation
+
+This addes user feedback on the ai suggestion and creating task form if the task to be added have same name as unfinished task or if user already have added 8 tasks.
+See the [validationTaskHelper.ts](/utils/validationTaskHelper.ts) file for helper function.
+
+For the ai feedback I would have prefered it to be a text in the same div as the adding button, however this needed styling and more logic, so I did not prioitize this.

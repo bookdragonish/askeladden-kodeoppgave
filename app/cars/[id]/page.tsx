@@ -13,6 +13,7 @@ export default function CarPage() {
   const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
   const [feedbackTaskForm, setFeedbackTaskForm] = useState("");
   const [feedbackSuggested, setFeedbackSuggested] = useState("");
+  const [taskFilter, setTaskFilter] = useState("alle");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
 
@@ -30,7 +31,13 @@ export default function CarPage() {
     { enabled: !!carId }
   );
 
-  console.log(tasks);
+  const filteredTasks = tasks?.filter((task) => {
+    if (taskFilter === "alle") return true;
+    if (taskFilter === "venter") return task.status === TaskStatus.PENDING;
+    if (taskFilter === "pågår") return task.status === TaskStatus.IN_PROGRESS;
+    if (taskFilter === "fullført") return task.status === TaskStatus.COMPLETED;
+    return true;
+  });
 
   const fetchAISuggestions = trpc.fetchAISuggestions.useMutation({
     onSuccess: () => {
@@ -63,17 +70,16 @@ export default function CarPage() {
         suggestion?.title
       );
 
-      if(allowCreate){
+      if (allowCreate) {
         createTask.mutate({
-        carId,
-        title: suggestion.title,
-        description: suggestion.description ?? undefined,
-        suggestionId,
-      });
-      } else{
-        setFeedbackSuggested(feedback)
+          carId,
+          title: suggestion.title,
+          description: suggestion.description ?? undefined,
+          suggestionId,
+        });
+      } else {
+        setFeedbackSuggested(feedback);
       }
-
     }
   };
 
@@ -189,6 +195,7 @@ export default function CarPage() {
       </div>
 
       {/* Task Suggestions Section */}
+
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl">Oppgaveforslag</h2>
@@ -240,7 +247,7 @@ export default function CarPage() {
                 </button>
               </div>
             ))}
-              {(feedbackSuggested) && (
+            {feedbackSuggested && (
               <div className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm">
                 Feil: {feedbackSuggested}
               </div>
@@ -329,6 +336,49 @@ export default function CarPage() {
             )}
           </form>
         )}
+
+        <div className="mb-4 flex gap-1 border-b border-gray-200">
+          <button
+            onClick={() => setTaskFilter("alle")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskFilter === "alle"
+                ? "border-blue-600 text-blue-600 bg-blue-50"
+                : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+          >
+            Alle
+          </button>
+          <button
+            onClick={() => setTaskFilter("venter")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskFilter === "venter"
+                ? "border-gray-600 text-gray-800 bg-gray-50"
+                : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+          >
+            Venter
+          </button>
+          <button
+            onClick={() => setTaskFilter("pågår")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskFilter === "pågår"
+                ? "border-yellow-600 text-yellow-800 bg-yellow-50"
+                : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+          >
+            Pågår
+          </button>
+          <button
+            onClick={() => setTaskFilter("fullført")}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              taskFilter === "fullført"
+                ? "border-green-600 text-green-700 bg-green-50"
+                : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            }`}
+          >
+            Fullført
+          </button>
+        </div>
 
         {!tasks || tasks.length === 0 ? (
           <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600">
