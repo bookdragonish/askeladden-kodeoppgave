@@ -28,10 +28,11 @@ export function validationTaskHelper(  tasks: Task[] | undefined,
         if (!task.createdAt) return false;
         const d = new Date(task.createdAt);
         const now = new Date();
+        const status = (task.status != "pending")
         return (
           d.getUTCFullYear() === now.getUTCFullYear() &&
           d.getUTCMonth() === now.getUTCMonth() &&
-          d.getUTCDate() === now.getUTCDate()
+          d.getUTCDate() === now.getUTCDate() && status
         );
       }).length;
 

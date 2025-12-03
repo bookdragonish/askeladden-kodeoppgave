@@ -7,13 +7,16 @@ import { useParams } from "next/navigation";
 import { TaskStatus } from "@/db/schema";
 import { validationTaskHelper } from "@/utils/validationTaskHelper";
 
+type TaskFilter = "alle" | "venter" | "pågår" | "fullført";
+
 export default function CarPage() {
   const { id } = useParams() as { id: string };
-  const carId = parseInt(id);
+  const carId = Number(id);
+
   const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
   const [feedbackTaskForm, setFeedbackTaskForm] = useState("");
   const [feedbackSuggested, setFeedbackSuggested] = useState("");
-  const [taskFilter, setTaskFilter] = useState("alle");
+  const [taskFilter, setTaskFilter] = useState<TaskFilter>("alle");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
 
@@ -31,6 +34,7 @@ export default function CarPage() {
     { enabled: !!carId }
   );
 
+  // Filtering for task tabs
   const filteredTasks = tasks?.filter((task) => {
     if (taskFilter === "alle") return true;
     if (taskFilter === "venter") return task.status === TaskStatus.PENDING;
@@ -42,6 +46,7 @@ export default function CarPage() {
   const fetchAISuggestions = trpc.fetchAISuggestions.useMutation({
     onSuccess: () => {
       refetchSuggestions();
+      setFeedbackSuggested("");
     },
   });
 
@@ -50,6 +55,7 @@ export default function CarPage() {
       setTaskTitle("");
       setTaskDescription("");
       setShowCreateTaskForm(false);
+      setFeedbackTaskForm("");
       refetchTasks();
     },
   });
@@ -62,24 +68,24 @@ export default function CarPage() {
 
   const handleCreateTaskFromSuggestion = (suggestionId: number) => {
     setFeedbackSuggested("");
+
     const suggestion = suggestions?.find((s) => s.id === suggestionId);
+    if (!suggestion) return;
 
-    if (suggestion) {
-      const { allowCreate, feedback } = validationTaskHelper(
-        tasks,
-        suggestion?.title
-      );
+    const { allowCreate, feedback } = validationTaskHelper(
+      tasks,
+      suggestion.title
+    );
 
-      if (allowCreate) {
-        createTask.mutate({
-          carId,
-          title: suggestion.title,
-          description: suggestion.description ?? undefined,
-          suggestionId,
-        });
-      } else {
-        setFeedbackSuggested(feedback);
-      }
+    if (allowCreate) {
+      createTask.mutate({
+        carId,
+        title: suggestion.title,
+        description: suggestion.description ?? undefined,
+        suggestionId,
+      });
+    } else {
+      setFeedbackSuggested(feedback);
     }
   };
 
@@ -87,17 +93,16 @@ export default function CarPage() {
     e.preventDefault();
     setFeedbackTaskForm("");
 
-    const { allowCreate, feedback } = validationTaskHelper(
-      tasks,
-      taskTitle.trim()
-    );
-    console.log(feedback);
+    const trimmedTitle = taskTitle.trim();
+    const trimmedDescription = taskDescription.trim();
+
+    const { allowCreate, feedback } = validationTaskHelper(tasks, trimmedTitle);
 
     if (allowCreate) {
       createTask.mutate({
         carId,
-        title: taskTitle.trim(),
-        description: taskDescription.trim() || undefined,
+        title: trimmedTitle,
+        description: trimmedDescription || undefined,
       });
     } else {
       setFeedbackTaskForm(feedback);
@@ -195,7 +200,6 @@ export default function CarPage() {
       </div>
 
       {/* Task Suggestions Section */}
-
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl">Oppgaveforslag</h2>
@@ -223,6 +227,11 @@ export default function CarPage() {
           </div>
         ) : (
           <div className="grid gap-3">
+            {feedbackSuggested && (
+              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm">
+                Feil: {feedbackSuggested}
+              </div>
+            )}
             {suggestions.map((suggestion) => (
               <div
                 key={suggestion.id}
@@ -247,21 +256,21 @@ export default function CarPage() {
                 </button>
               </div>
             ))}
-            {feedbackSuggested && (
-              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm">
-                Feil: {feedbackSuggested}
-              </div>
-            )}
           </div>
         )}
       </section>
 
-      {/* Tasks Section */}
+      {/* Form */}
       <section className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl">Oppgaver</h2>
           <button
-            onClick={() => setShowCreateTaskForm(!showCreateTaskForm)}
+            onClick={() => {
+              setShowCreateTaskForm((prev) => !prev);
+              setFeedbackTaskForm("");
+              setTaskTitle("");
+              setTaskDescription("");
+            }}
             className="px-4 py-2 text-sm bg-blue-600 text-white border-none rounded whitespace-nowrap cursor-pointer hover:bg-blue-700 transition-colors"
           >
             {showCreateTaskForm ? "Avbryt" : "+ Opprett oppgave"}
@@ -337,6 +346,8 @@ export default function CarPage() {
           </form>
         )}
 
+        {/* Filter Tabs */}
+
         <div className="mb-4 flex gap-1 border-b border-gray-200">
           <button
             onClick={() => setTaskFilter("alle")}
@@ -346,7 +357,7 @@ export default function CarPage() {
                 : "border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50"
             }`}
           >
-            Alle
+            Alle {tasks?.length ? `(${tasks.length})` : ""}
           </button>
           <button
             onClick={() => setTaskFilter("venter")}
@@ -357,6 +368,11 @@ export default function CarPage() {
             }`}
           >
             Venter
+            {tasks &&
+              tasks.filter((t) => t.status === TaskStatus.PENDING).length > 0 &&
+              ` (${
+                tasks.filter((t) => t.status === TaskStatus.PENDING).length
+              })`}
           </button>
           <button
             onClick={() => setTaskFilter("pågår")}
@@ -367,6 +383,12 @@ export default function CarPage() {
             }`}
           >
             Pågår
+            {tasks &&
+              tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length >
+                0 &&
+              ` (${
+                tasks.filter((t) => t.status === TaskStatus.IN_PROGRESS).length
+              })`}
           </button>
           <button
             onClick={() => setTaskFilter("fullført")}
@@ -377,6 +399,12 @@ export default function CarPage() {
             }`}
           >
             Fullført
+            {tasks &&
+              tasks.filter((t) => t.status === TaskStatus.COMPLETED).length >
+                0 &&
+              ` (${
+                tasks.filter((t) => t.status === TaskStatus.COMPLETED).length
+              })`}
           </button>
         </div>
 
@@ -385,9 +413,13 @@ export default function CarPage() {
             Ingen oppgaver ennå. Opprett en oppgave eller konverter et forslag
             til oppgave.
           </div>
+        ) : !filteredTasks || filteredTasks.length === 0 ? (
+          <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600">
+            Ingen oppgaver med status "{taskFilter}".
+          </div>
         ) : (
           <div className="grid gap-3">
-            {tasks.map((task) => (
+            {filteredTasks.map((task) => (
               <div
                 key={task.id}
                 className={`p-4 border rounded-lg ${
@@ -420,7 +452,10 @@ export default function CarPage() {
                       {task.createdAt && (
                         <span>
                           Opprettet:{" "}
-                          {new Date(task.createdAt).toLocaleDateString("no-NO")}
+                          {new Date(task.createdAt).toLocaleString("no-NO", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
                         </span>
                       )}
                     </div>
