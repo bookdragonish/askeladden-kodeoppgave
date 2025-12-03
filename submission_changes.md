@@ -41,6 +41,10 @@ Files changes:
 - [TrashIcon.tsx](./assets/TrashIcon.tsx): Icon
 - [page.tsx (home)](./app/page.tsx) Added button with onclick propperties
 
+### Loader
+
+Claude.ai helped creating a car loader on the ai call
+
 ## What I would have implemented later:
 - Styling: With more time I would have focused a bit on the styling, however this can be timeconsuming and does not show that much competance.
 - Delete and Edit: for the tasks, however implementation is similar to the deleting of cars, so I did not prioritize this

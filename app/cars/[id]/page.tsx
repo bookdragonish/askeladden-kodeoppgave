@@ -215,18 +215,15 @@ export default function CarPage() {
           </button>
         </div>
 
-          {fetchAISuggestions.isPending && (
-            <Loader/>
-          )}
-   
-
         {fetchAISuggestions.error && (
           <div className="mb-4 p-4 bg-red-50 text-red-600 rounded">
             <p className="m-0">Feil: {fetchAISuggestions.error.message}</p>
           </div>
         )}
 
-        {!suggestions || suggestions.length === 0 ? (
+        {fetchAISuggestions.isPending ? (
+          <Loader />
+        ) : !suggestions || suggestions.length === 0 ? (
           <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600">
             Ingen forslag ennå. Klikk på &quot;Hent AI-forslag&quot; for å
             generere forslag.
@@ -264,6 +261,10 @@ export default function CarPage() {
             ))}
           </div>
         )}
+
+
+
+
       </section>
 
       {/* Form */}
