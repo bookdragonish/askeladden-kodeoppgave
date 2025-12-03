@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { trpc } from "@/utils/trpc";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TaskStatus } from "@/db/schema";
 import { validationTaskHelper } from "@/utils/validationTaskHelper";
-
-
 
 export default function CarPage() {
   const { id } = useParams() as { id: string };
@@ -30,6 +28,10 @@ export default function CarPage() {
     { carId },
     { enabled: !!carId }
   );
+
+  useEffect(() => {
+    setFeedbackTaskForm("");
+  }, [showCreateTaskForm]);
 
   console.log(tasks);
 
@@ -69,19 +71,22 @@ export default function CarPage() {
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
 
-     const {allowCreate, feedback} = validationTaskHelper(tasks, taskTitle.trim());
-     console.log(feedback)
+    const { allowCreate, feedback } = validationTaskHelper(
+      tasks,
+      taskTitle.trim()
+    );
+    console.log(feedback);
 
-      if (allowCreate) {
-        createTask.mutate({
-          carId,
-          title: taskTitle.trim(),
-          description: taskDescription.trim() || undefined,
-        });
-      } else {
-        setFeedbackTaskForm(feedback);
-      }
+    if (allowCreate) {
+      createTask.mutate({
+        carId,
+        title: taskTitle.trim(),
+        description: taskDescription.trim() || undefined,
+      });
+    } else {
+      setFeedbackTaskForm(feedback);
     }
+  };
 
   const handleStatusChange = (taskId: number, newStatus: TaskStatus) => {
     updateTaskStatus.mutate({
@@ -301,9 +306,9 @@ export default function CarPage() {
                 Avbryt
               </button>
             </div>
-            {createTask.error && (
+            {(createTask.error || feedbackTaskForm) && (
               <div className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm">
-                Feil: {createTask.error.message}
+                Feil: {createTask.error?.message} {feedbackTaskForm}
               </div>
             )}
           </form>
