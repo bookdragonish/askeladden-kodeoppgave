@@ -95,11 +95,16 @@ export const appRouter = router({
       console.log(suggestions)
 
       // If the AI gave suggestions we want to remove previous ones to prevent getting to much info on the page
-      // if (suggestions){
-      //   await db
-      // .delete(taskSuggestions)
-      // .where(eq(taskSuggestions.carId, input.carId));
-      // }
+      try{
+        if (suggestions){
+        await db
+      .delete(taskSuggestions)
+      .where(eq(taskSuggestions.carId, input.carId));
+      }
+      } catch (err) {
+        // TODO: Handle issue with deleting onesided relations from database
+        console.log(err)
+      }
 
       // Save suggestions to database
     const insertedSuggestions = await db
@@ -112,7 +117,7 @@ export const appRouter = router({
         }))
       )
       .returning();
-
+      console.log(insertedSuggestions)
       return insertedSuggestions;
     }),
 
