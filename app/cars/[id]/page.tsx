@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { TaskStatus } from "@/db/schema";
 import { validationTaskHelper } from "@/utils/validationTaskHelper";
+import Loader from "@/assets/Loader";
 
 type TaskFilter = "alle" | "venter" | "pågår" | "fullført";
 
@@ -213,6 +214,11 @@ export default function CarPage() {
               : "Hent AI-forslag"}
           </button>
         </div>
+
+          {fetchAISuggestions.isPending && (
+            <Loader/>
+          )}
+   
 
         {fetchAISuggestions.error && (
           <div className="mb-4 p-4 bg-red-50 text-red-600 rounded">
