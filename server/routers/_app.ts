@@ -66,6 +66,21 @@ export const appRouter = router({
       }
     }),
 
+  deleteCar: publicProcedure
+    .input(z.object({ regNr: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const deleted = await db
+        .delete(cars)
+        .where(eq(cars.regNr, input.regNr))
+        .returning();
+
+      if (deleted.length === 0) {
+        throw new Error("Bil ikke funnet");
+      }
+
+      return true;
+    }),
+
   // Task Suggestions
   getTaskSuggestions: publicProcedure
     .input(z.object({ carId: z.number().int().positive() }))
@@ -92,32 +107,32 @@ export const appRouter = router({
 
       // Generate AI suggestions
       const suggestions = await generateTaskSuggestions(car);
-      console.log(suggestions)
+      console.log(suggestions);
 
       // If the AI gave suggestions we want to remove previous ones to prevent getting to much info on the page
-      try{
-        if (suggestions){
-        await db
-      .delete(taskSuggestions)
-      .where(eq(taskSuggestions.carId, input.carId));
-      }
+      try {
+        if (suggestions) {
+          await db
+            .delete(taskSuggestions)
+            .where(eq(taskSuggestions.carId, input.carId));
+        }
       } catch (err) {
         // TODO: Handle issue with deleting onesided relations from database
-        console.log(err)
+        console.log(err);
       }
 
       // Save suggestions to database
-    const insertedSuggestions = await db
-      .insert(taskSuggestions)
-      .values(
-        suggestions.map((suggestion) => ({
-          carId: input.carId,
-          title: suggestion.title,
-          description: suggestion.description,
-        }))
-      )
-      .returning();
-      console.log(insertedSuggestions)
+      const insertedSuggestions = await db
+        .insert(taskSuggestions)
+        .values(
+          suggestions.map((suggestion) => ({
+            carId: input.carId,
+            title: suggestion.title,
+            description: suggestion.description,
+          }))
+        )
+        .returning();
+      console.log(insertedSuggestions);
       return insertedSuggestions;
     }),
 
