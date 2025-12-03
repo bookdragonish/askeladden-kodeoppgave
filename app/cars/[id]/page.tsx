@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { trpc } from "@/utils/trpc";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -12,6 +12,7 @@ export default function CarPage() {
   const carId = parseInt(id);
   const [showCreateTaskForm, setShowCreateTaskForm] = useState(false);
   const [feedbackTaskForm, setFeedbackTaskForm] = useState("");
+  const [feedbackSuggested, setFeedbackSuggested] = useState("");
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
 
@@ -28,10 +29,6 @@ export default function CarPage() {
     { carId },
     { enabled: !!carId }
   );
-
-  useEffect(() => {
-    setFeedbackTaskForm("");
-  }, [showCreateTaskForm]);
 
   console.log(tasks);
 
@@ -57,19 +54,32 @@ export default function CarPage() {
   });
 
   const handleCreateTaskFromSuggestion = (suggestionId: number) => {
+    setFeedbackSuggested("");
     const suggestion = suggestions?.find((s) => s.id === suggestionId);
+
     if (suggestion) {
-      createTask.mutate({
+      const { allowCreate, feedback } = validationTaskHelper(
+        tasks,
+        suggestion?.title
+      );
+
+      if(allowCreate){
+        createTask.mutate({
         carId,
         title: suggestion.title,
         description: suggestion.description ?? undefined,
         suggestionId,
       });
+      } else{
+        setFeedbackSuggested(feedback)
+      }
+
     }
   };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
+    setFeedbackTaskForm("");
 
     const { allowCreate, feedback } = validationTaskHelper(
       tasks,
@@ -230,6 +240,11 @@ export default function CarPage() {
                 </button>
               </div>
             ))}
+              {(feedbackSuggested) && (
+              <div className="mt-4 p-3 bg-red-50 text-red-600 rounded text-sm">
+                Feil: {feedbackSuggested}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -298,6 +313,7 @@ export default function CarPage() {
                 type="button"
                 onClick={() => {
                   setShowCreateTaskForm(false);
+                  setFeedbackTaskForm("");
                   setTaskTitle("");
                   setTaskDescription("");
                 }}

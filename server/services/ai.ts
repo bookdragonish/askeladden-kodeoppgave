@@ -1,7 +1,7 @@
 import { z } from "zod";
-import { gateway, generateObject, generateText } from "ai";
+import { gateway, generateObject } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { taskSuggestions } from "@/db/schema";
+// import { taskSuggestions } from "@/db/schema";
 
 /**
  * AI Service for generating task suggestions

@@ -6,9 +6,6 @@ import { eq } from "drizzle-orm";
 import { generateTaskSuggestions } from "../services/ai";
 import { fetchCarInfoFromVegvesen } from "../services/carFromVegvesen";
 
-const VEGVESEN_BASE_URL =
-  "https://kjoretoyoppslag.atlas.vegvesen.no/ws/no/vegvesen/kjoretoy/kjoretoyoppslag/v1/kjennemerkeoppslag/kjoretoy/";
-
 export const appRouter = router({
   getCars: publicProcedure.query(async () => {
     return await db.select().from(cars);
@@ -63,7 +60,7 @@ export const appRouter = router({
             .returning();
           return newCar;
         }
-      } catch (err) {
+      } catch {
         // console.error("createCar DB error:", err);
         throw new Error("Bil kan ikke hentes fra vegvesen");
       }
@@ -95,13 +92,14 @@ export const appRouter = router({
 
       // Generate AI suggestions
       const suggestions = await generateTaskSuggestions(car);
+      console.log(suggestions)
 
       // If the AI gave suggestions we want to remove previous ones to prevent getting to much info on the page
-      if (suggestions){
-        await db
-      .delete(taskSuggestions)
-      .where(eq(taskSuggestions.carId, input.carId));
-      }
+      // if (suggestions){
+      //   await db
+      // .delete(taskSuggestions)
+      // .where(eq(taskSuggestions.carId, input.carId));
+      // }
 
       // Save suggestions to database
     const insertedSuggestions = await db
