@@ -107,7 +107,6 @@ export const appRouter = router({
 
       // Generate AI suggestions
       const suggestions = await generateTaskSuggestions(car);
-      console.log(suggestions);
 
       // If the AI gave suggestions we want to remove previous ones to prevent getting to much info on the page
       try {
@@ -118,7 +117,6 @@ export const appRouter = router({
         }
       } catch (err) {
         // TODO: Handle issue with deleting onesided relations from database
-        console.log(err);
       }
 
       // Save suggestions to database
@@ -132,7 +130,6 @@ export const appRouter = router({
           }))
         )
         .returning();
-      console.log(insertedSuggestions);
       return insertedSuggestions;
     }),
 

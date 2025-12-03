@@ -422,7 +422,7 @@ export default function CarPage() {
           </div>
         ) : !filteredTasks || filteredTasks.length === 0 ? (
           <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg text-center text-gray-600">
-            Ingen oppgaver med status "{taskFilter}".
+            Ingen oppgaver med status &quot{taskFilter}&quot.
           </div>
         ) : (
           <div className="grid gap-3">

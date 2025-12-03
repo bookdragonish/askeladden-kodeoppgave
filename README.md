@@ -1,5 +1,7 @@
 # Kodeoppgave | Askeladden Interns 2026
 
+- SE [submission_changes.md](./submission_changes.md) FOR ENDRINGER 
+
 Vi skal bygge neste generasjons plattform for bilverksteder, og vi trenger hjelp til å løfte den til et nytt nivå. Vi har laget en enkel verksted-applikasjon som demonstrerer grunnfunksjonaliteten, men den har flere kjente feil og mangler som trenger oppmerksomhet.
 
 ## Kjente feil og mangler

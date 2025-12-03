@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { gateway, generateObject } from "ai";
-import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 // import { taskSuggestions } from "@/db/schema";
 
 /**
@@ -32,12 +31,6 @@ export interface CarInfo {
   year: number;
   color: string | null;
 }
-
-const openai = createOpenAICompatible({
-  name: "openai",
-  apiKey: process.env.AI_GATEWAY_API_KEY!,
-  baseURL: "https://ai-gateway.vercel.sh/v1",
-});
 
 /**
  * Generate AI-powered task suggestions for a car

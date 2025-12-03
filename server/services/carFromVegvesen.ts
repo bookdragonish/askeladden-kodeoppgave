@@ -45,6 +45,5 @@ export async function fetchCarInfoFromVegvesen(regNr: string) {
     }
   }
 
-  console.log(make, model, year, color)
   return { make, model, year, color };
 }
